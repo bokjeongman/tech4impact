@@ -15,7 +15,7 @@ interface AccessibilityReport {
   accessibility_level: string;
   category: string;
   details: string | null;
-  photo_url: string | null;
+  photo_urls: string[];
   status: string;
   created_at: string;
   reviewed_at: string | null;
@@ -278,13 +278,26 @@ const Profile = () => {
                             <p className="text-sm text-muted-foreground mt-2">{report.details}</p>
                           )}
 
-                          {report.photo_url && (
+                          {report.photo_urls && report.photo_urls.length > 0 && (
                             <div className="mt-2">
-                              <img 
-                                src={report.photo_url} 
-                                alt="제보 사진" 
-                                className="w-full max-w-md h-48 object-cover rounded-lg border"
-                              />
+                              {report.photo_urls.length === 1 ? (
+                                <img 
+                                  src={report.photo_urls[0]} 
+                                  alt="제보 사진" 
+                                  className="w-full max-w-md h-48 object-cover rounded-lg border"
+                                />
+                              ) : (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {report.photo_urls.map((url: string, idx: number) => (
+                                    <img 
+                                      key={idx}
+                                      src={url} 
+                                      alt={`제보 사진 ${idx + 1}`} 
+                                      className="w-full h-32 object-cover rounded-lg border"
+                                    />
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )}
 

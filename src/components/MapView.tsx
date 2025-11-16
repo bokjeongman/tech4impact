@@ -184,7 +184,7 @@ const MapView = ({
             severity: severity,
             name: report.location_name,
             details: report.details,
-            photo_url: report.photo_url,
+            photo_urls: report.photo_urls || [],
           };
         });
 

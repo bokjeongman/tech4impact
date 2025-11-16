@@ -14,6 +14,7 @@ import PlaceReviewModal from "@/components/PlaceReviewModal";
 import WheelchairBadge from "@/components/WheelchairBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { MapPin, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -241,14 +242,32 @@ const Index = () => {
                 </div>
               )}
 
-              {selectedBarrier.photo_url && (
+              {selectedBarrier.photo_urls && selectedBarrier.photo_urls.length > 0 && (
                 <div className="space-y-1">
                   <h4 className="font-medium text-sm">사진</h4>
-                  <img
-                    src={selectedBarrier.photo_url}
-                    alt={selectedBarrier.name}
-                    className="w-full rounded-lg border"
-                  />
+                  {selectedBarrier.photo_urls.length === 1 ? (
+                    <img
+                      src={selectedBarrier.photo_urls[0]}
+                      alt={selectedBarrier.name}
+                      className="w-full rounded-lg border"
+                    />
+                  ) : (
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        {selectedBarrier.photo_urls.map((url: string, index: number) => (
+                          <CarouselItem key={index}>
+                            <img
+                              src={url}
+                              alt={`${selectedBarrier.name} ${index + 1}`}
+                              className="w-full rounded-lg border"
+                            />
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious />
+                      <CarouselNext />
+                    </Carousel>
+                  )}
                 </div>
               )}
             </div>
