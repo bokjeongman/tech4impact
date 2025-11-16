@@ -12,7 +12,7 @@ const Sidebar = ({ open, onOpenChange }: SidebarProps) => {
     { icon: Home, label: "기능", disabled: false },
     { icon: MapPin, label: "내 경로", disabled: false },
     { icon: FileText, label: "휠체어 접근성 제보", disabled: false },
-    { icon: MessageSquare, label: "슬거찾기", disabled: false },
+    { icon: MessageSquare, label: "즐겨찾기", disabled: false },
     { icon: Settings, label: "설정", disabled: false },
   ];
 
@@ -20,33 +20,22 @@ const Sidebar = ({ open, onOpenChange }: SidebarProps) => {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-72 p-0">
         <SheetHeader className="p-6 pb-4 border-b">
-          <SheetTitle className="flex items-center gap-2">
-            🦽 휠체어 경로 안내
-          </SheetTitle>
+          <SheetTitle className="flex items-center gap-2">🦽 휠체어 경로 안내</SheetTitle>
         </SheetHeader>
-        
+
         <div className="py-4">
           <div className="space-y-1 px-3">
-            <h3 className="px-3 py-2 text-sm font-semibold text-muted-foreground">
-              기능
-            </h3>
+            <h3 className="px-3 py-2 text-sm font-semibold text-muted-foreground">기능</h3>
             {menuItems.slice(0, 4).map((item) => (
-              <Button
-                key={item.label}
-                variant="ghost"
-                className="w-full justify-start gap-3"
-                disabled={item.disabled}
-              >
+              <Button key={item.label} variant="ghost" className="w-full justify-start gap-3" disabled={item.disabled}>
                 <item.icon className="h-5 w-5" />
                 {item.label}
               </Button>
             ))}
           </div>
-          
+
           <div className="mt-6 space-y-1 px-3">
-            <h3 className="px-3 py-2 text-sm font-semibold text-muted-foreground">
-              범례
-            </h3>
+            <h3 className="px-3 py-2 text-sm font-semibold text-muted-foreground">범례</h3>
             <div className="space-y-2 px-3 py-2">
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 rounded-full bg-primary" />
