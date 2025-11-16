@@ -8,11 +8,14 @@ import RouteOptions from "@/components/RouteOptions";
 import ReviewButton from "@/components/ReviewButton";
 import Sidebar from "@/components/Sidebar";
 import ReviewModal from "@/components/ReviewModal";
+import PlaceReviewModal from "@/components/PlaceReviewModal";
 import WheelchairBadge from "@/components/WheelchairBadge";
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [placeReviewModalOpen, setPlaceReviewModalOpen] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<{ name: string; lat: number; lon: number } | null>(null);
   const [viewMode, setViewMode] = useState<"default" | "yellow">("default");
   const [hasRoute, setHasRoute] = useState(false);
   const [startPoint, setStartPoint] = useState<{ lat: number; lon: number; name: string } | null>(null);
@@ -93,6 +96,10 @@ const Index = () => {
           endPoint={endPoint}
           selectedRouteType={selectedRouteType}
           onRoutesCalculated={setRouteOptions}
+          onPlaceClick={(place) => {
+            setSelectedPlace(place);
+            setPlaceReviewModalOpen(true);
+          }}
         />
         
         {/* 후기 등록 버튼 */}
@@ -118,6 +125,10 @@ const Index = () => {
                 warningPercentage={routeOptions.find(r => r.type === selectedRouteType)?.warningPercentage || 0}
                 dangerPercentage={routeOptions.find(r => r.type === selectedRouteType)?.dangerPercentage || 0}
                 transitInfo={routeOptions.find(r => r.type === selectedRouteType)?.transitInfo}
+                startPoint={startPoint}
+                endPoint={endPoint}
+                rawDistance={routeOptions.find(r => r.type === selectedRouteType)?.distance}
+                rawDuration={routeOptions.find(r => r.type === selectedRouteType)?.duration}
                 onStartNavigation={() => {
                   if (viewMode === "default") {
                     setViewMode("yellow");
@@ -140,6 +151,16 @@ const Index = () => {
 
       {/* 후기 등록 모달 */}
       <ReviewModal open={reviewModalOpen} onOpenChange={setReviewModalOpen} />
+      
+      {/* 장소 후기 모달 */}
+      <PlaceReviewModal 
+        open={placeReviewModalOpen} 
+        onClose={() => {
+          setPlaceReviewModalOpen(false);
+          setSelectedPlace(null);
+        }}
+        place={selectedPlace}
+      />
     </div>
   );
 };

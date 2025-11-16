@@ -1,6 +1,7 @@
 import { MapPin, Clock, CheckCircle2, AlertTriangle, AlertCircle, Bus, Train } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import SaveRouteButton from "./SaveRouteButton";
 
 interface RouteInfoProps {
   distance?: string;
@@ -22,6 +23,10 @@ interface RouteInfoProps {
     transfers: number;
   };
   onStartNavigation?: () => void;
+  startPoint?: { lat: number; lon: number; name: string };
+  endPoint?: { lat: number; lon: number; name: string };
+  rawDistance?: number;
+  rawDuration?: number;
 }
 
 const RouteInfo = ({
@@ -34,6 +39,10 @@ const RouteInfo = ({
   variant = "default",
   transitInfo,
   onStartNavigation,
+  startPoint,
+  endPoint,
+  rawDistance,
+  rawDuration,
 }: RouteInfoProps) => {
   return (
     <Card className="rounded-t-3xl border-0 shadow-lg">
@@ -125,16 +134,26 @@ const RouteInfo = ({
         )}
 
         {showButton && (
-          <Button
-            className={`w-full h-14 text-base font-semibold ${
-              variant === "yellow"
-                ? "bg-accent hover:bg-accent/90 text-accent-foreground"
-                : "bg-primary hover:bg-primary/90"
-            }`}
-            onClick={onStartNavigation}
-          >
-            {variant === "yellow" ? "🦽 휠체어 경로 안내 시작" : "경로 안내 시작"}
-          </Button>
+          <div className="space-y-2">
+            {startPoint && endPoint && rawDistance && rawDuration && (
+              <SaveRouteButton
+                startPoint={startPoint}
+                endPoint={endPoint}
+                distance={rawDistance}
+                duration={rawDuration}
+              />
+            )}
+            <Button
+              className={`w-full h-14 text-base font-semibold ${
+                variant === "yellow"
+                  ? "bg-accent hover:bg-accent/90 text-accent-foreground"
+                  : "bg-primary hover:bg-primary/90"
+              }`}
+              onClick={onStartNavigation}
+            >
+              {variant === "yellow" ? "🦽 휠체어 경로 안내 시작" : "경로 안내 시작"}
+            </Button>
+          </div>
         )}
       </div>
     </Card>

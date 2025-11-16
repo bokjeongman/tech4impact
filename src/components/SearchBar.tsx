@@ -40,7 +40,17 @@ const SearchBar = ({
         }
       );
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`API 오류: ${response.status}`);
+      }
+
+      const text = await response.text();
+      if (!text) {
+        setSearchResults([]);
+        return;
+      }
+
+      const data = JSON.parse(text);
       
       if (data.searchPoiInfo?.pois?.poi) {
         const results = data.searchPoiInfo.pois.poi.map((poi: any, index: number) => ({
