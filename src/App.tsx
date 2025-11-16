@@ -9,6 +9,7 @@ import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import MyRoutes from "./pages/MyRoutes";
+import MyReviews from "./pages/MyReviews";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/my-routes" element={<MyRoutes />} />
+          <Route path="/my-reviews" element={<MyReviews />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
