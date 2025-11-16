@@ -270,9 +270,9 @@ const ReviewModal = ({ open, onOpenChange }: ReviewModalProps) => {
                 <SelectValue placeholder="선택하세요" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="accessible">접근 가능</SelectItem>
-                <SelectItem value="partially_accessible">부분 접근 가능</SelectItem>
-                <SelectItem value="not_accessible">접근 불가</SelectItem>
+                <SelectItem value="good">양호</SelectItem>
+                <SelectItem value="moderate">보통</SelectItem>
+                <SelectItem value="difficult">어려움</SelectItem>
               </SelectContent>
             </Select>
           </div>
