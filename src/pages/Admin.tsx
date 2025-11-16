@@ -19,7 +19,7 @@ interface Report {
   accessibility_level: string;
   category: string;
   details: string | null;
-  photo_url: string | null;
+  photo_urls: string[];
   status: string;
   created_at: string;
   user_id: string;

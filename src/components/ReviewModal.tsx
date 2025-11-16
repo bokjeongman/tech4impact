@@ -43,8 +43,8 @@ const ReviewModal = ({ open, onOpenChange }: ReviewModalProps) => {
   const [accessibility, setAccessibility] = useState("");
   const [category, setCategory] = useState("");
   const [details, setDetails] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,23 +67,32 @@ const ReviewModal = ({ open, onOpenChange }: ReviewModalProps) => {
   }, []);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error("사진 크기는 5MB 이하여야 합니다.");
+    const files = Array.from(e.target.files || []);
+    
+    // 최대 5장까지만 허용
+    if (photos.length + files.length > 5) {
+      toast.error("사진은 최대 5장까지 업로드할 수 있습니다.");
+      return;
+    }
+    
+    // 각 파일 크기 체크
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("각 사진의 크기는 5MB 이하여야 합니다.");
         return;
       }
-      setPhoto(file);
-      setPhotoPreview(URL.createObjectURL(file));
     }
+    
+    setPhotos(prev => [...prev, ...files]);
+    setPhotoPreviews(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
   };
 
-  const handleRemovePhoto = () => {
-    setPhoto(null);
-    if (photoPreview) {
-      URL.revokeObjectURL(photoPreview);
-      setPhotoPreview(null);
+  const handleRemovePhoto = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+    if (photoPreviews[index]) {
+      URL.revokeObjectURL(photoPreviews[index]);
     }
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSearch = async (query: string) => {
@@ -169,24 +178,25 @@ const ReviewModal = ({ open, onOpenChange }: ReviewModalProps) => {
 
       setIsSubmitting(true);
 
-      let photoUrl = null;
+      // Upload photos if provided
+      const photoUrls: string[] = [];
+      if (photos.length > 0) {
+        for (const photo of photos) {
+          const fileExt = photo.name.split('.').pop();
+          const fileName = `${user.id}/${Date.now()}_${Math.random()}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('accessibility-photos')
+            .upload(fileName, photo);
 
-      // Upload photo if provided
-      if (photo) {
-        const fileExt = photo.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('accessibility-photos')
-          .upload(fileName, photo);
+          if (uploadError) throw uploadError;
 
-        if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage
+            .from('accessibility-photos')
+            .getPublicUrl(fileName);
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('accessibility-photos')
-          .getPublicUrl(fileName);
-
-        photoUrl = publicUrl;
+          photoUrls.push(publicUrl);
+        }
       }
 
       const { error } = await supabase
@@ -199,7 +209,7 @@ const ReviewModal = ({ open, onOpenChange }: ReviewModalProps) => {
           accessibility_level: accessibility,
           category: category.trim(),
           details: details.trim() || null,
-          photo_url: photoUrl,
+          photo_urls: photoUrls,
         });
 
       if (error) throw error;
@@ -217,7 +227,9 @@ const ReviewModal = ({ open, onOpenChange }: ReviewModalProps) => {
       setSearchQuery("");
       setSearchResults([]);
       setShowResults(false);
-      handleRemovePhoto();
+      setPhotos([]);
+      photoPreviews.forEach(url => URL.revokeObjectURL(url));
+      setPhotoPreviews([]);
     } catch (error: any) {
       if (import.meta.env.DEV) console.error("제보 등록 실패:", error);
       toast.error("제보 등록에 실패했습니다. 다시 시도해주세요.");
@@ -343,39 +355,45 @@ const ReviewModal = ({ open, onOpenChange }: ReviewModalProps) => {
 
           {/* 사진 첨부 */}
           <div className="space-y-2">
-            <Label htmlFor="photo">사진 첨부 (선택)</Label>
-            {photoPreview ? (
-              <div className="relative">
-                <img
-                  src={photoPreview}
-                  alt="미리보기"
-                  className="w-full h-48 object-cover rounded-lg border"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2"
-                  onClick={handleRemovePhoto}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
-                <input
-                  id="photo"
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                />
-                <label htmlFor="photo" className="cursor-pointer flex flex-col items-center gap-2">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    클릭하여 사진 선택 (최대 5MB)
-                  </span>
-                </label>
+            <Label htmlFor="photo">사진 첨부 (선택, 최대 5장)</Label>
+            <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+              <input
+                id="photo"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoChange}
+                className="hidden"
+                disabled={photos.length >= 5}
+              />
+              <label htmlFor="photo" className="cursor-pointer flex flex-col items-center gap-2">
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  클릭하여 사진 선택 (최대 5MB, {photos.length}/5장)
+                </span>
+              </label>
+            </div>
+            
+            {photoPreviews.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {photoPreviews.map((preview, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={preview}
+                      alt={`미리보기 ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={() => handleRemovePhoto(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
