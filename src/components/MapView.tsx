@@ -19,7 +19,6 @@ interface MapViewProps {
   selectedRouteType?: "transit" | "walk" | "car" | null;
   onBarrierClick?: (barrier: any) => void;
   onPlaceClick?: (place: { name: string; lat: number; lon: number }) => void;
-  onMapClick?: (location: { lat: number; lon: number }) => void;
   onRoutesCalculated?: (routes: Array<{
     type: "transit" | "walk" | "car";
     distance: number;
@@ -48,8 +47,7 @@ const MapView = ({
   selectedRouteType, 
   onRoutesCalculated,
   onBarrierClick,
-  onPlaceClick,
-  onMapClick 
+  onPlaceClick
 }: MapViewProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
@@ -156,7 +154,7 @@ const MapView = ({
     };
   }, []);
 
-  // 승인된 제보 데이터 가져오기
+  // 승인된 제보 데이터 가져오기 및 실시간 구독
   useEffect(() => {
     const fetchApprovedReports = async () => {
       try {
@@ -198,18 +196,19 @@ const MapView = ({
 
     fetchApprovedReports();
 
-    // 실시간 업데이트 구독
+    // 실시간 변경 사항 구독
     const channel = supabase
-      .channel("accessibility_reports_changes")
+      .channel('accessibility_reports_changes')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "*",
-          schema: "public",
-          table: "accessibility_reports",
-          filter: "status=eq.approved",
+          event: '*',
+          schema: 'public',
+          table: 'accessibility_reports',
+          filter: 'status=eq.approved'
         },
-        () => {
+        (payload) => {
+          console.log('배리어 데이터 변경 감지:', payload);
           fetchApprovedReports();
         }
       )
@@ -282,15 +281,10 @@ const MapView = ({
       // 최초 진입 시 현재 위치 자동 요청
       getCurrentLocation();
       
-      // 지도 클릭 이벤트 - POI 검색 및 로드뷰
+      // 지도 클릭 이벤트 - POI 검색
       tmapInstance.addListener("click", async (evt: any) => {
         const lat = evt.latLng.lat();
         const lon = evt.latLng.lng();
-        
-        // 로드뷰 콜백 실행
-        if (onMapClick) {
-          onMapClick({ lat, lon });
-        }
         
         // POI 검색 (장소 후기용)
         if (!onPlaceClick) return;
@@ -552,8 +546,8 @@ const MapView = ({
           return;
         }
 
-        // 선택된 교통수단이 없으면 도보와 자동차 경로만 계산 (대중교통 제외)
-        const routesToCalculate = selectedRouteType ? [selectedRouteType] : ["walk", "car"]; // "transit" 제외
+        // 도보 경로만 계산
+        const routesToCalculate = ["walk"];
         const calculatedRoutes: any[] = [];
 
         for (const routeType of routesToCalculate) {
