@@ -36,9 +36,10 @@ interface MapViewProps {
       transfers: number;
     };
   }>) => void;
+  onPlaceClick?: (place: { name: string; lat: number; lon: number }) => void;
 }
 
-const MapView = ({ startPoint, endPoint, selectedRouteType, onRoutesCalculated }: MapViewProps) => {
+const MapView = ({ startPoint, endPoint, selectedRouteType, onRoutesCalculated, onPlaceClick }: MapViewProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -266,6 +267,44 @@ const MapView = ({ startPoint, endPoint, selectedRouteType, onRoutesCalculated }
       setLoading(false);
       // 최초 진입 시 현재 위치 자동 요청
       getCurrentLocation();
+      
+      // 지도 클릭 이벤트 - POI 검색
+      tmapInstance.addListener("click", async (evt: any) => {
+        if (!onPlaceClick) return;
+        
+        const lat = evt.latLng.lat();
+        const lon = evt.latLng.lng();
+        
+        try {
+          // 클릭한 위치 주변의 POI 검색
+          const response = await fetch(
+            `https://apis.openapi.sk.com/tmap/pois/search/around?version=1&centerLon=${lon}&centerLat=${lat}&radius=50&resCoordType=WGS84GEO&reqCoordType=WGS84GEO&count=1`,
+            {
+              headers: {
+                appKey: "KZDXJtx63R735Qktn8zkkaJv4tbaUqDc1lXzyjLT",
+              },
+            }
+          );
+          
+          if (!response.ok) return;
+          
+          const text = await response.text();
+          if (!text) return;
+          
+          const data = JSON.parse(text);
+          
+          if (data.searchPoiInfo?.pois?.poi && data.searchPoiInfo.pois.poi.length > 0) {
+            const poi = data.searchPoiInfo.pois.poi[0];
+            onPlaceClick({
+              name: poi.name,
+              lat: parseFloat(poi.noorLat),
+              lon: parseFloat(poi.noorLon),
+            });
+          }
+        } catch (error) {
+          console.error("POI 검색 실패:", error);
+        }
+      });
     } catch (err) {
       console.error("지도 초기화 실패:", err);
       setError("지도를 불러오는데 실패했습니다.");
@@ -394,25 +433,15 @@ const MapView = ({ startPoint, endPoint, selectedRouteType, onRoutesCalculated }
         title: barrier.name,
       });
 
-      // 마커 클릭 이벤트 - 인포윈도우
+      // 마커 클릭 이벤트 - 장소 후기 열기
       marker.addListener("click", () => {
-        const categoryLabels: Record<string, string> = {
-          ramp: "경사로",
-          elevator: "엘리베이터",
-          curb: "턱",
-          stairs: "계단",
-          parking: "주차장",
-          restroom: "화장실",
-          entrance: "출입구",
-          other: "기타",
-        };
-        
-        const infoWindow = new window.Tmapv2.InfoWindow({
-          position: position,
-          content: `<div style="padding:10px;"><strong>${barrier.name}</strong><br/>${categoryLabels[barrier.type] || barrier.type}${barrier.details ? `<br/>${barrier.details}` : ""}</div>`,
-          type: 2,
-          map: map,
-        });
+        if (onPlaceClick) {
+          onPlaceClick({
+            name: barrier.name,
+            lat: barrier.latitude,
+            lon: barrier.longitude,
+          });
+        }
       });
 
       barrierMarkersRef.current.push(marker);
@@ -469,22 +498,15 @@ const MapView = ({ startPoint, endPoint, selectedRouteType, onRoutesCalculated }
         title: favorite.place_name,
       });
 
-      // 마커 클릭 이벤트
+      // 마커 클릭 이벤트 - 장소 후기 열기
       marker.addListener("click", () => {
-        const infoWindow = new window.Tmapv2.InfoWindow({
-          position: position,
-          content: `<div style="padding:10px;">
-            <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
-              <svg width="16" height="16" viewBox="0 0 16 16" style="fill:#fbbf24;">
-                <path d="M8 1 L9.75 6 L15 6 L10.75 9.25 L12.5 14 L8 11 L3.5 14 L5.25 9.25 L1 6 L6.25 6 Z"/>
-              </svg>
-              <strong>${favorite.place_name}</strong>
-            </div>
-            <div style="font-size:12px;color:#666;">${favorite.address || ''}</div>
-          </div>`,
-          type: 2,
-          map: map,
-        });
+        if (onPlaceClick) {
+          onPlaceClick({
+            name: favorite.place_name,
+            lat: Number(favorite.latitude),
+            lon: Number(favorite.longitude),
+          });
+        }
       });
 
       favoriteMarkersRef.current.push(marker);
