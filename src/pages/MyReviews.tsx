@@ -138,10 +138,19 @@ const MyReviews = () => {
 
   const getLevelColor = (level: string) => {
     switch (level) {
-      case "안전": return "bg-green-500";
-      case "주의": return "bg-yellow-500";
-      case "매우위험": return "bg-red-500";
+      case "good": return "bg-green-500";
+      case "moderate": return "bg-yellow-500";
+      case "difficult": return "bg-red-500";
       default: return "bg-gray-500";
+    }
+  };
+
+  const getLevelLabel = (level: string) => {
+    switch (level) {
+      case "good": return "양호";
+      case "moderate": return "보통";
+      case "difficult": return "어려움";
+      default: return level;
     }
   };
 
@@ -206,7 +215,7 @@ const MyReviews = () => {
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={getLevelColor(review.accessibility_level)}>
-                          {review.accessibility_level}
+                          {getLevelLabel(review.accessibility_level)}
                         </Badge>
                         <Badge variant="outline">{review.category}</Badge>
                         <Badge className={statusInfo.color}>
@@ -273,15 +282,19 @@ const MyReviews = () => {
             <div>
               <label className="text-sm font-medium mb-2 block">접근성 수준</label>
               <div className="flex gap-2">
-                {["안전", "주의", "매우위험"].map((level) => (
+                {[
+                  { value: "good", label: "양호" },
+                  { value: "moderate", label: "보통" },
+                  { value: "difficult", label: "어려움" }
+                ].map((level) => (
                   <Button
-                    key={level}
-                    variant={editedLevel === level ? "default" : "outline"}
+                    key={level.value}
+                    variant={editedLevel === level.value ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setEditedLevel(level)}
-                    className={editedLevel === level ? getLevelColor(level) : ""}
+                    onClick={() => setEditedLevel(level.value)}
+                    className={editedLevel === level.value ? getLevelColor(level.value) : ""}
                   >
-                    {level}
+                    {level.label}
                   </Button>
                 ))}
               </div>
