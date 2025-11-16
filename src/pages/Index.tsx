@@ -16,6 +16,20 @@ const Index = () => {
   const [hasRoute, setHasRoute] = useState(false);
   const [startPoint, setStartPoint] = useState<{ lat: number; lon: number; name: string } | null>(null);
   const [endPoint, setEndPoint] = useState<{ lat: number; lon: number; name: string } | null>(null);
+  const [searchMode, setSearchMode] = useState<"start" | "end" | null>(null);
+
+  const handleSelectPlace = (place: { lat: number; lon: number; name: string }, type: "start" | "end") => {
+    if (type === "start") {
+      setStartPoint(place);
+      setSearchMode("end");
+      setEndPoint(null);
+      setHasRoute(false);
+    } else {
+      setEndPoint(place);
+      setSearchMode(null);
+      setHasRoute(true);
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -33,13 +47,10 @@ const Index = () => {
             </Button>
             <div className="flex-1 min-w-0">
               <SearchBar
-                placeholder="장소 검색"
+                placeholder={searchMode === "end" ? "도착지 검색" : "장소 검색"}
                 variant={viewMode}
-                onSelectStart={(place) => setStartPoint(place)}
-                onSelectEnd={(place) => {
-                  setEndPoint(place);
-                  setHasRoute(true);
-                }}
+                onSelectStart={(place) => handleSelectPlace(place, "start")}
+                onSelectEnd={(place) => handleSelectPlace(place, "end")}
               />
             </div>
           </div>

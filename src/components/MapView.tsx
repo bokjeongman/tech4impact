@@ -94,33 +94,35 @@ const MapView = ({ startPoint, endPoint }: MapViewProps) => {
     }
   }, []);
 
-  // 사용자 위치가 변경되면 지도 중심 이동 및 마커 표시
+  // 사용자 위치가 변경되면 현재 위치 마커 표시
   useEffect(() => {
     if (!map || !userLocation) return;
 
     const { lat, lon } = userLocation;
     const position = new window.Tmapv2.LatLng(lat, lon);
 
-    // 지도 중심 이동
-    map.setCenter(position);
-    map.setZoom(16);
-
     // 기존 마커 제거
     if (currentMarkerRef.current) {
       currentMarkerRef.current.setMap(null);
     }
 
-    // 새 마커 생성 (핀 모양)
+    // 현재 위치 마커 생성 (파란색 핀)
     const marker = new window.Tmapv2.Marker({
       position: position,
       map: map,
-      icon: "https://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_p.png",
+      icon: "https://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_c.png",
       iconSize: new window.Tmapv2.Size(24, 38),
       title: "현재 위치",
     });
 
     currentMarkerRef.current = marker;
-  }, [map, userLocation]);
+
+    // 경로가 없을 때만 지도 중심 이동
+    if (!startPoint && !endPoint) {
+      map.setCenter(position);
+      map.setZoom(16);
+    }
+  }, [map, userLocation, startPoint, endPoint]);
 
   // 배리어 데이터 (더미 데이터 - 추후 실제 DB 연동)
   const barrierData = [
@@ -178,7 +180,7 @@ const MapView = ({ startPoint, endPoint }: MapViewProps) => {
 
   // 도보 경로 탐색 및 배리어 오버레이
   useEffect(() => {
-    if (!map || !window.Tmapv2 || !startPoint || !endPoint) return;
+    if (!map || !window.Tmapv2 || !endPoint) return;
 
     const drawRoute = async () => {
       try {
@@ -189,6 +191,13 @@ const MapView = ({ startPoint, endPoint }: MapViewProps) => {
         markersRef.current.forEach((marker) => marker.setMap(null));
         markersRef.current = [];
 
+        // 출발지가 없으면 현재 위치 사용
+        const start = startPoint || userLocation;
+        if (!start) {
+          toast.error("현재 위치를 찾을 수 없습니다. 위치 권한을 허용해주세요.");
+          return;
+        }
+
         // T Map 도보 경로 API 호출
         const response = await fetch("https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1", {
           method: "POST",
@@ -197,13 +206,13 @@ const MapView = ({ startPoint, endPoint }: MapViewProps) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            startX: startPoint.lon.toString(),
-            startY: startPoint.lat.toString(),
+            startX: start.lon.toString(),
+            startY: start.lat.toString(),
             endX: endPoint.lon.toString(),
             endY: endPoint.lat.toString(),
             reqCoordType: "WGS84GEO",
             resCoordType: "WGS84GEO",
-            startName: startPoint.name,
+            startName: startPoint?.name || "현재 위치",
             endName: endPoint.name,
           }),
         });
@@ -233,14 +242,17 @@ const MapView = ({ startPoint, endPoint }: MapViewProps) => {
             });
           });
 
-          // 출발지 마커
-          const startMarker = new window.Tmapv2.Marker({
-            position: new window.Tmapv2.LatLng(startPoint.lat, startPoint.lon),
-            icon: "https://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_s.png",
-            iconSize: new window.Tmapv2.Size(24, 38),
-            map: map,
-            title: "출발",
-          });
+          // 출발지 마커 (startPoint가 있을 때만)
+          if (startPoint) {
+            const startMarker = new window.Tmapv2.Marker({
+              position: new window.Tmapv2.LatLng(startPoint.lat, startPoint.lon),
+              icon: "https://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_s.png",
+              iconSize: new window.Tmapv2.Size(24, 38),
+              map: map,
+              title: "출발",
+            });
+            markersRef.current.push(startMarker);
+          }
 
           // 도착지 마커
           const endMarker = new window.Tmapv2.Marker({
@@ -250,8 +262,7 @@ const MapView = ({ startPoint, endPoint }: MapViewProps) => {
             map: map,
             title: "도착",
           });
-
-          markersRef.current = [startMarker, endMarker];
+          markersRef.current.push(endMarker);
 
           // 경로가 모두 보이도록 지도 범위 조정
           const bounds = new window.Tmapv2.LatLngBounds();
@@ -265,7 +276,7 @@ const MapView = ({ startPoint, endPoint }: MapViewProps) => {
     };
 
     drawRoute();
-  }, [map, startPoint, endPoint]);
+  }, [map, startPoint, endPoint, userLocation]);
 
   // 경로 세그먼트 생성 (배리어 근처는 다른 색상)
   const createRouteSegments = (path: any[]) => {
