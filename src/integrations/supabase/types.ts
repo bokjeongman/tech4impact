@@ -136,6 +136,48 @@ export type Database = {
         }
         Relationships: []
       }
+      route_history: {
+        Row: {
+          created_at: string
+          distance: number | null
+          duration: number | null
+          end_lat: number
+          end_lon: number
+          end_name: string
+          id: string
+          start_lat: number
+          start_lon: number
+          start_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          distance?: number | null
+          duration?: number | null
+          end_lat: number
+          end_lon: number
+          end_name: string
+          id?: string
+          start_lat: number
+          start_lon: number
+          start_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          distance?: number | null
+          duration?: number | null
+          end_lat?: number
+          end_lon?: number
+          end_name?: string
+          id?: string
+          start_lat?: number
+          start_lon?: number
+          start_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
