@@ -805,7 +805,6 @@ const MapView = ({
               startDiv.innerHTML = startSvg;
               startDiv.style.width = '48px';
               startDiv.style.height = '64px';
-              
               const startMarker = new window.Tmapv2.Marker({
                 position: new window.Tmapv2.LatLng(startPoint.lat, startPoint.lon),
                 icon: startDiv,
@@ -858,7 +857,6 @@ const MapView = ({
             endDiv.innerHTML = endSvg;
             endDiv.style.width = '48px';
             endDiv.style.height = '64px';
-            
             const endMarker = new window.Tmapv2.Marker({
               position: new window.Tmapv2.LatLng(endPoint.lat, endPoint.lon),
               icon: endDiv,
@@ -1068,7 +1066,7 @@ const MapView = ({
         </div>
       </div>;
   }
-  return <div className={`relative w-full h-full ${className ?? ""}` }>
+  return <div className={`relative w-full h-full ${className ?? ""}`}>
       {/* 지도 컨테이너 */}
       <div ref={mapRef} className="w-full h-full" />
 
@@ -1095,32 +1093,21 @@ const MapView = ({
 
       {/* 로드뷰 버튼 (상단 우측) */}
       <div className="absolute top-4 right-4 z-40 pointer-events-auto">
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={() => {
-            if (map && onRoadViewToggle) {
-              const center = map.getCenter();
-              const lat = center._lat;
-              const lon = center._lng;
-              onRoadViewToggle(lat, lon);
-            }
-          }}
-          title="로드뷰 보기"
-          className="shadow-lg h-12 w-12 rounded-full px-0"
-        >
+        <Button size="icon" variant="outline" onClick={() => {
+        if (map && onRoadViewToggle) {
+          const center = map.getCenter();
+          const lat = center._lat;
+          const lon = center._lng;
+          onRoadViewToggle(lat, lon);
+        }
+      }} title="로드뷰 보기" className="shadow-lg h-12 w-12 rounded-full px-0 mx-[30px]">
           <Eye className="h-5 w-5" />
         </Button>
       </div>
 
       {/* 필터 버튼 (하단 우측) */}
       <div className="absolute bottom-24 right-4 z-40 space-y-2 pointer-events-auto">
-        <Button
-          onClick={() => setShowFilter(!showFilter)}
-          size="lg"
-          title="필터"
-          className="h-14 w-14 rounded-full shadow-xl bg-background hover:bg-muted text-foreground border-2 border-border"
-        >
+        <Button onClick={() => setShowFilter(!showFilter)} size="lg" title="필터" className="h-14 w-14 rounded-full shadow-xl bg-background hover:bg-muted text-foreground border-2 border-border mx-[28px] my-[215px]">
           <Filter className="h-6 w-6" />
         </Button>
         
