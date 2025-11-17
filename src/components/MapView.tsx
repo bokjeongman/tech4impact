@@ -72,10 +72,6 @@ const MapView = ({
   const favoriteMarkersRef = useRef<any[]>([]);
   const arrowMarkersRef = useRef<any[]>([]);
   const [transitDetails, setTransitDetails] = useState<any>(null);
-  const [roadViewMode, setRoadViewMode] = useState(false);
-  const [roadViewPosition, setRoadViewPosition] = useState<{ lat: number; lon: number } | null>(null);
-  const [routePath, setRoutePath] = useState<Array<{ lat: number; lon: number }> | null>(null);
-  const [autoPlayRoadView, setAutoPlayRoadView] = useState(false);
 
   // 현재 위치 가져오기 및 지속적 추적
   const getCurrentLocation = () => {
@@ -285,14 +281,6 @@ const MapView = ({
       setLoading(false);
       // 최초 진입 시 현재 위치 자동 요청
       getCurrentLocation();
-      
-      // 지도 이동 시 로드뷰 위치 동기화
-      tmapInstance.addListener("centerChanged", () => {
-        if (roadViewMode) {
-          const center = tmapInstance.getCenter();
-          setRoadViewPosition({ lat: center.lat(), lon: center.lng() });
-        }
-      });
       
       // 지도 클릭 이벤트 - POI 검색
       tmapInstance.addListener("click", async (evt: any) => {
@@ -797,13 +785,6 @@ const MapView = ({
             console.log("🗺️ 선택된 경로 표시:", selectedRouteType, selectedRoute ? "찾음" : "없음");
           }
           if (selectedRoute && selectedRoute.lineStrings) {
-            // 경로 좌표를 state에 저장 (로드뷰용)
-            const pathCoords = selectedRoute.lineStrings.map((point: any) => ({
-              lat: point.lat(),
-              lon: point.lng()
-            }));
-            setRoutePath(pathCoords);
-
             // 경로 그리기
             const routeSegments = createRouteSegments(selectedRoute.lineStrings);
             const createdPolylines: any[] = [];
@@ -908,15 +889,22 @@ const MapView = ({
         currentPoint.lng()
       );
 
-      // 화살표 SVG 생성
+      // 화살표 SVG 생성 (더 크고 명확하게)
       const arrowSvg = `
-        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2 L12 18 M12 18 L6 12 M12 18 L18 12" 
+        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="shadow-${i}" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
+            </filter>
+          </defs>
+          <circle cx="20" cy="20" r="18" fill="white" stroke="${getRouteColor(selectedRouteType)}" stroke-width="2"/>
+          <path d="M20 10 L20 28 M20 28 L14 22 M20 28 L26 22" 
                 stroke="${getRouteColor(selectedRouteType)}" 
                 stroke-width="3" 
                 stroke-linecap="round" 
                 stroke-linejoin="round" 
-                fill="none"/>
+                fill="none"
+                filter="url(#shadow-${i})"/>
         </svg>
       `;
 
@@ -924,11 +912,12 @@ const MapView = ({
       arrowDiv.innerHTML = arrowSvg;
       arrowDiv.style.transform = `rotate(${angle}deg)`;
       arrowDiv.style.transformOrigin = 'center';
+      arrowDiv.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))';
 
       const arrowMarker = new window.Tmapv2.Marker({
         position: currentPoint,
         icon: arrowDiv,
-        iconSize: new window.Tmapv2.Size(24, 24),
+        iconSize: new window.Tmapv2.Size(40, 40),
         map: map,
       });
 
@@ -1045,82 +1034,8 @@ const MapView = ({
       {/* 지도 컨테이너 */}
       <div 
         ref={mapRef} 
-        className={`w-full h-full ${roadViewMode ? "absolute inset-0" : ""}`}
-        style={roadViewMode ? { width: "70%", height: "100%" } : undefined}
+        className="w-full h-full"
       />
-      
-      {/* 로드뷰 패널 */}
-      {roadViewMode && roadViewPosition && (
-        <div className="absolute right-0 top-0 w-[30%] h-full bg-background border-l-2 border-border">
-          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  if (userLocation) {
-                    setRoadViewPosition({ lat: userLocation.lat, lon: userLocation.lon });
-                    if (map) {
-                      map.setCenter(new window.Tmapv2.LatLng(userLocation.lat, userLocation.lon));
-                    }
-                  }
-                }}
-                disabled={!userLocation}
-              >
-                <Navigation className="h-4 w-4 mr-1" />
-                현위치
-              </Button>
-              {startPoint && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setRoadViewPosition({ lat: startPoint.lat, lon: startPoint.lon });
-                    if (map) {
-                      map.setCenter(new window.Tmapv2.LatLng(startPoint.lat, startPoint.lon));
-                    }
-                  }}
-                >
-                  출발지
-                </Button>
-              )}
-              {endPoint && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setRoadViewPosition({ lat: endPoint.lat, lon: endPoint.lon });
-                    if (map) {
-                      map.setCenter(new window.Tmapv2.LatLng(endPoint.lat, endPoint.lon));
-                    }
-                  }}
-                >
-                  도착지
-                </Button>
-              )}
-            </div>
-            {routePath && routePath.length > 0 && (
-              <Button
-                size="sm"
-                variant={autoPlayRoadView ? "default" : "outline"}
-                onClick={() => setAutoPlayRoadView(!autoPlayRoadView)}
-                className="w-full"
-              >
-                {autoPlayRoadView ? "⏸️ 일시정지" : "▶️ 경로 따라보기"}
-              </Button>
-            )}
-          </div>
-          <RoadView
-            latitude={roadViewPosition.lat}
-            longitude={roadViewPosition.lon}
-            routePath={routePath}
-            autoPlay={autoPlayRoadView}
-            onPositionChange={(lat, lon) => setRoadViewPosition({ lat, lon })}
-            onAutoPlayEnd={() => setAutoPlayRoadView(false)}
-            className="w-full h-full"
-          />
-        </div>
-      )}
 
       {/* 로딩 오버레이 */}
       {loading && userLocation === null && (
@@ -1152,21 +1067,23 @@ const MapView = ({
         </div>
       )}
 
-      {/* 필터 및 로드뷰 버튼 */}
-      <div className={`absolute top-4 z-10 space-y-2 ${roadViewMode ? "right-[51%]" : "right-4"}`}>
+      {/* 로드뷰 및 필터 버튼 */}
+      <div className="absolute top-4 right-4 z-10 space-y-2">
         <Button
+          size="icon"
+          variant="outline"
           onClick={() => {
-            setRoadViewMode(!roadViewMode);
-            if (!roadViewMode && map) {
+            if (map) {
               const center = map.getCenter();
-              setRoadViewPosition({ lat: center.lat(), lon: center.lng() });
+              const lat = center._lat;
+              const lon = center._lng;
+              window.open(`https://map.kakao.com/?urlX=${lon}&urlY=${lat}&urlLevel=3&map_type=TYPE_MAP&map_hybrid=false`, '_blank');
             }
           }}
-          size="lg"
-          className="h-12 w-12 rounded-full shadow-xl bg-background hover:bg-muted text-foreground border-2 border-border"
-          title={roadViewMode ? "로드뷰 끄기" : "로드뷰 켜기"}
+          className="shadow-lg h-12 w-12 rounded-full"
+          title="카카오맵 로드뷰 열기"
         >
-          {roadViewMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          <Eye className="h-5 w-5" />
         </Button>
         
         <Button

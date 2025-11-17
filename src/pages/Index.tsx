@@ -141,39 +141,25 @@ const Index = () => {
         <ReviewButton onClick={() => setReviewModalOpen(true)} />
       </div>
 
-      {/* 하단 경로 옵션 - 경로 탐색 후에만 표시 */}
-      {hasRoute && routeOptions.length > 0 && (
+      {/* 하단 경로 정보 - 경로 탐색 후에만 표시 */}
+      {hasRoute && routeOptions.length > 0 && selectedRouteType && (
         <div className="relative z-10 bg-background rounded-t-3xl border-t shadow-lg max-h-[50vh] overflow-y-auto">
-          {selectedRouteType ? (
-            <div className="p-4">
-              <button
-                onClick={() => setSelectedRouteType(null)}
-                className="text-sm text-primary hover:underline mb-2"
-              >
-                ← 다른 경로 보기
-              </button>
-              <RouteInfo
-                variant={viewMode}
-                distance={`${(routeOptions.find(r => r.type === selectedRouteType)?.distance / 1000).toFixed(1)} km`}
-                duration={`${Math.ceil(routeOptions.find(r => r.type === selectedRouteType)?.duration / 60)}분`}
-                safePercentage={routeOptions.find(r => r.type === selectedRouteType)?.safePercentage || 0}
-                warningPercentage={routeOptions.find(r => r.type === selectedRouteType)?.warningPercentage || 0}
-                dangerPercentage={routeOptions.find(r => r.type === selectedRouteType)?.dangerPercentage || 0}
-                transitInfo={routeOptions.find(r => r.type === selectedRouteType)?.transitInfo}
-                startPoint={startPoint}
-                endPoint={endPoint}
-                rawDistance={routeOptions.find(r => r.type === selectedRouteType)?.distance}
-                rawDuration={routeOptions.find(r => r.type === selectedRouteType)?.duration}
-                showButton={false}
-              />
-            </div>
-          ) : (
-            <RouteOptions
-              options={routeOptions}
-              selectedType={selectedRouteType}
-              onSelectRoute={setSelectedRouteType}
+          <div className="p-4">
+            <RouteInfo
+              variant={viewMode}
+              distance={`${(routeOptions.find(r => r.type === selectedRouteType)?.distance / 1000).toFixed(1)} km`}
+              duration={`${Math.ceil(routeOptions.find(r => r.type === selectedRouteType)?.duration / 60)}분`}
+              safePercentage={routeOptions.find(r => r.type === selectedRouteType)?.safePercentage || 0}
+              warningPercentage={routeOptions.find(r => r.type === selectedRouteType)?.warningPercentage || 0}
+              dangerPercentage={routeOptions.find(r => r.type === selectedRouteType)?.dangerPercentage || 0}
+              transitInfo={routeOptions.find(r => r.type === selectedRouteType)?.transitInfo}
+              startPoint={startPoint}
+              endPoint={endPoint}
+              rawDistance={routeOptions.find(r => r.type === selectedRouteType)?.distance}
+              rawDuration={routeOptions.find(r => r.type === selectedRouteType)?.duration}
+              showButton={false}
             />
-          )}
+          </div>
         </div>
       )}
 
