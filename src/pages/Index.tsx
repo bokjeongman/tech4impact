@@ -143,7 +143,7 @@ const Index = () => {
       }) => {
         setSelectedPlace(place);
         setPlaceReviewModalOpen(true);
-      }} className="px-0" />
+      }} />
         
         {/* 후기 등록 버튼 */}
         <ReviewButton onClick={() => setReviewModalOpen(true)} />
