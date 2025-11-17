@@ -369,14 +369,14 @@ const MapView = ({
     // HTML 마커로 생성
     const markerDiv = document.createElement('div');
     markerDiv.innerHTML = svgIcon;
-    markerDiv.style.width = '52px';
-    markerDiv.style.height = '52px';
+    markerDiv.style.width = '60px';
+    markerDiv.style.height = '60px';
     markerDiv.style.cursor = 'pointer';
     const marker = new window.Tmapv2.Marker({
       position: position,
       map: map,
       icon: markerDiv,
-      iconSize: new window.Tmapv2.Size(52, 52),
+      iconSize: new window.Tmapv2.Size(60, 60),
       title: "현재 위치",
       zIndex: 9999
     });
@@ -387,9 +387,9 @@ const MapView = ({
       center: position,
       radius: 30,
       strokeWeight: 2,
-      strokeColor: "#3b82f6",
+      strokeColor: "#3b87f0",
       strokeOpacity: 0.5,
-      fillColor: "#3b82f6",
+      fillColor: "#3b87f0",
       fillOpacity: 0.15,
       map: map
     });
