@@ -79,7 +79,13 @@ const PlaceSearchResult = ({ results, onSelect, onClose }: PlaceSearchResultProp
   if (selectedPlace) {
     return (
       <div className="absolute top-full left-0 right-0 z-20 bg-background border-t shadow-lg">
-        <Card className="m-2 p-4">
+        <Card className="m-2 p-4 relative">
+          <button
+            onClick={() => setSelectedPlace(null)}
+            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+          >
+            ✕
+          </button>
           <div className="flex items-start gap-3 mb-4">
             <MapPin className="h-6 w-6 text-primary mt-1 shrink-0" />
             <div className="flex-1 min-w-0">
@@ -135,7 +141,13 @@ const PlaceSearchResult = ({ results, onSelect, onClose }: PlaceSearchResultProp
   }
 
   return (
-    <div className="absolute top-full left-0 right-0 z-20 bg-background border-t shadow-lg max-h-96 overflow-y-auto">
+    <div className="absolute top-full left-0 right-0 z-20 bg-background border-t shadow-lg max-h-96 overflow-y-auto relative">
+      <button
+        onClick={onClose}
+        className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center bg-background border rounded-full shadow-md hover:bg-muted text-lg font-bold"
+      >
+        ✕
+      </button>
       {results.map((place) => (
         <Card
           key={place.id}
