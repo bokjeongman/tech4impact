@@ -101,6 +101,7 @@ const MapView = ({
   const favoriteMarkersRef = useRef<any[]>([]);
   const arrowMarkersRef = useRef<any[]>([]);
   const [transitDetails, setTransitDetails] = useState<any>(null);
+  const hasInitializedPositionRef = useRef(false);
 
   // 현재 위치 가져오기 및 지속적 추적
   const getCurrentLocation = () => {
@@ -282,6 +283,12 @@ const MapView = ({
         height: "100%",
         zoom: 16
       });
+      
+      // 지도 드래그 시 자동 중심 이동 비활성화
+      tmapInstance.addListener("dragstart", () => {
+        hasInitializedPositionRef.current = true;
+      });
+      
       setMap(tmapInstance);
       setLoading(false);
       // 최초 진입 시 현재 위치 자동 요청
@@ -409,10 +416,11 @@ const MapView = ({
     });
     accuracyCircleRef.current = circle;
 
-    // 경로가 없을 때만 지도 중심 이동
-    if (!startPoint && !endPoint) {
+    // 최초 1회만 지도 중심을 현재 위치로 이동 (경로가 없고, 아직 초기화되지 않았을 때)
+    if (!startPoint && !endPoint && !hasInitializedPositionRef.current) {
       map.setCenter(position);
       map.setZoom(16);
+      hasInitializedPositionRef.current = true;
     }
   }, [map, userLocation, heading, startPoint, endPoint]);
 
