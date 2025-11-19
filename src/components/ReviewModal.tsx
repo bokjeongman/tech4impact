@@ -210,11 +210,12 @@ const ReviewModal = ({ open, onOpenChange }: ReviewModalProps) => {
           category: category.trim(),
           details: details.trim() || null,
           photo_urls: photoUrls,
+          status: 'approved',
         });
 
       if (error) throw error;
 
-      toast.success("제보가 성공적으로 등록되었습니다! 관리자 검토 후 지도에 반영됩니다.");
+      toast.success("제보가 성공적으로 등록되어 지도에 바로 반영되었습니다!");
       onOpenChange(false);
       
       // 폼 초기화
