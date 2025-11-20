@@ -102,8 +102,9 @@ const MapView = ({
   const arrowMarkersRef = useRef<any[]>([]);
   const [transitDetails, setTransitDetails] = useState<any>(null);
   const hasInitializedPositionRef = useRef(false);
+  const [isMobile] = useState(() => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 
-  // 현재 위치 가져오기 및 지속적 추적
+  // 현재 위치 가져오기
   const getCurrentLocation = () => {
     setLoading(true);
     setError(null);
@@ -118,42 +119,84 @@ const MapView = ({
       navigator.geolocation.clearWatch(watchIdRef.current);
     }
 
-    // 지속적으로 위치 추적
-    const watchId = navigator.geolocation.watchPosition(position => {
-      const {
-        latitude,
-        longitude
-      } = position.coords;
-      setUserLocation({
-        lat: latitude,
-        lon: longitude
+    // 모바일에서는 한 번만 위치 가져오기, 데스크탑에서는 지속적 추적
+    if (isMobile) {
+      // 모바일: 한 번만 위치 가져오기
+      navigator.geolocation.getCurrentPosition(position => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({
+          lat: latitude,
+          lon: longitude
+        });
+        setLoading(false);
+        
+        // 경로 탐색 중이 아닐 때만 지도 중심 이동
+        if (!startPoint && !endPoint && map) {
+          hasInitializedPositionRef.current = false; // 버튼 클릭 시에는 다시 중심 이동 허용
+          const position = new window.Tmapv2.LatLng(latitude, longitude);
+          map.setCenter(position);
+          map.setZoom(16);
+        }
+        
+        if (!userLocation) {
+          toast.success("현재 위치를 찾았습니다!");
+        }
+      }, error => {
+        let errorMessage = "위치를 가져올 수 없습니다.";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "위치 접근 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "위치 정보를 사용할 수 없습니다.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "위치 정보 요청 시간이 초과되었습니다.";
+            break;
+        }
+        setError(errorMessage);
+        setLoading(false);
+        toast.error(errorMessage);
+      }, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       });
-      setLoading(false);
-      if (watchIdRef.current === null) {
-        toast.success("현재 위치를 찾았습니다!");
-      }
-    }, error => {
-      let errorMessage = "위치를 가져올 수 없습니다.";
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          errorMessage = "위치 접근 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.";
-          break;
-        case error.POSITION_UNAVAILABLE:
-          errorMessage = "위치 정보를 사용할 수 없습니다.";
-          break;
-        case error.TIMEOUT:
-          errorMessage = "위치 정보 요청 시간이 초과되었습니다.";
-          break;
-      }
-      setError(errorMessage);
-      setLoading(false);
-      toast.error(errorMessage);
-    }, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0
-    });
-    watchIdRef.current = watchId;
+    } else {
+      // 데스크탑: 지속적으로 위치 추적
+      const watchId = navigator.geolocation.watchPosition(position => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({
+          lat: latitude,
+          lon: longitude
+        });
+        setLoading(false);
+        if (watchIdRef.current === null) {
+          toast.success("현재 위치를 찾았습니다!");
+        }
+      }, error => {
+        let errorMessage = "위치를 가져올 수 없습니다.";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "위치 접근 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "위치 정보를 사용할 수 없습니다.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "위치 정보 요청 시간이 초과되었습니다.";
+            break;
+        }
+        setError(errorMessage);
+        setLoading(false);
+        toast.error(errorMessage);
+      }, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+      watchIdRef.current = watchId;
+    }
 
     // 나침반 방향 추적 (지원하는 경우)
     if (window.DeviceOrientationEvent && 'ontouchstart' in window) {
@@ -416,13 +459,13 @@ const MapView = ({
     });
     accuracyCircleRef.current = circle;
 
-    // 최초 1회만 지도 중심을 현재 위치로 이동 (경로가 없고, 아직 초기화되지 않았을 때)
-    if (!startPoint && !endPoint && !hasInitializedPositionRef.current) {
+    // 데스크탑에서만 최초 1회 자동 중심 이동, 모바일에서는 버튼 클릭 시에만 이동
+    if (!isMobile && !startPoint && !endPoint && !hasInitializedPositionRef.current) {
       map.setCenter(position);
       map.setZoom(16);
       hasInitializedPositionRef.current = true;
     }
-  }, [map, userLocation, heading, startPoint, endPoint]);
+  }, [map, userLocation, heading, startPoint, endPoint, isMobile]);
 
   // 배리어 마커 표시
   useEffect(() => {
@@ -1138,8 +1181,8 @@ const MapView = ({
         </Button>
       </div>
 
-      {/* 필터 버튼 (하단 우측) */}
-      <div className="absolute bottom-24 right-4 z-40 space-y-2 pointer-events-auto">
+      {/* 필터 버튼 (모바일: 하단 좌측, 데스크탑: 하단 우측 위) */}
+      <div className={`absolute z-40 space-y-2 pointer-events-auto ${isMobile ? 'bottom-4 left-4' : 'bottom-24 right-4'}`}>
         <Button
           onClick={() => setShowFilter(!showFilter)}
           size="lg"
@@ -1149,7 +1192,7 @@ const MapView = ({
           <Filter className="h-6 w-6" />
         </Button>
         
-        {showFilter && <div className="absolute bottom-16 right-0 bg-background border-2 border-border rounded-lg shadow-xl p-3 space-y-2 min-w-[160px]">
+        {showFilter && <div className={`absolute bottom-16 bg-background border-2 border-border rounded-lg shadow-xl p-3 space-y-2 min-w-[160px] ${isMobile ? 'left-0' : 'right-0'}`}>
             <div className="text-sm font-semibold mb-2 text-foreground">접근성 필터</div>
             
             <button onClick={() => setFilter({
