@@ -9,7 +9,7 @@
 There are several ways of editing your application.
 
 **Use Lovable**
-
+come on publish url : https://safedd.lovable.app
 Simply visit the [Lovable Project](https://lovable.dev/projects/61a7ad8e-a9b2-4b24-a0a3-3b03856fb554) and start prompting.
 
 Changes made via Lovable will be committed automatically to this repo.
